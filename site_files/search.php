@@ -118,8 +118,6 @@ if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
         $formatter->setPattern('E d MMM yyyy');
 
         foreach ($found['matches'] as &$document) {
-
-            //echo '<p>' . $document['attrs']['title'] . "<br>" . $document['attrs']['summary'] . "</p>";
             // Get date from timestamp
             $date = new DateTime();
             $date->setTimestamp($document['attrs']['published']);
