@@ -17,22 +17,21 @@
 # along with Shinxsearch for Pelican.
 # If not, see <http://www.gnu.org/licenses/>.
 
-'''
+"""
 Sphinx Search
 -------------
 
 This pelican plugin generates an xmlpipe2 formatted file that can be used by the
 sphinxsearch indexer to index the entire site.
-'''
 
-from __future__ import unicode_literals
-
+.. seealso:: https://sphinxsearch.com/docs/current/xmlpipe2.html
+"""
+# Standard imports
 import os.path
-from bs4 import BeautifulSoup
-from codecs import open
 import html
 import zlib
-
+# Custom imports
+from bs4 import BeautifulSoup
 from pelican import signals
 
 
