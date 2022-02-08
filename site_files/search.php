@@ -133,9 +133,9 @@ if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
             $tags = json_decode($document['attrs']['tags'], true);
             ?>
 
-            <div class="article" itemscope itemtype="http://schema.org/BlogPosting">
-                <a href="{{ SITEURL }}/<?php echo $document['attrs']['slug']; ?>.html">
-                    <h3 itemprop="name headline"><?php echo $document['attrs']['title']; ?></h3>
+            <article class="article" itemscope itemtype="http://schema.org/BlogPosting">
+                <a href="{{ SITEURL }}/<?php echo $document['attrs']['url']; ?>">
+                    <h2 itemprop="headline"><?php echo $document['attrs']['title']; ?></h2>
                 </a>
                 <time datetime="<?php echo $date->format('c'); ?>" itemprop="datePublished"><?php echo $formatter->format($date); ?></time>
                 &nbsp;—&nbsp;
