@@ -1,7 +1,7 @@
 /*
 This file is part of Shinxsearch for Pelican
 
-Copyright (C) 2017 Ysard
+Copyright (C) 2017-2022 Ysard
 
 Shinxsearch for Pelican is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
