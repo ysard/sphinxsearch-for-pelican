@@ -1,21 +1,6 @@
 /* Search form */
 #custom-search-input {
     margin: 0px;
-
-    /* fix superposition of github ruban on search box */
-    z-index: 1;
-
-    /* put in superposition of header => correct by mediaqueries on small screens */
-    position: relative;
-    top: -75px;
-}
-/* Small devices (tablets, 970px (@screen-md-max) and up) */
-@media (max-width: 970px) {
-    #custom-search-input {
-
-    /* put in superposition of header => correct by mediaqueries on small screens */
-    top: 0px;
-    }
 }
 
 #custom-search-input .input-group{
@@ -43,4 +28,3 @@
     box-shadow: none;
     border-left: solid 1px #ccc;
 }
- 
