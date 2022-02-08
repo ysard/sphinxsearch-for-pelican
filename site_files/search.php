@@ -124,6 +124,13 @@ if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
             $date = new DateTime();
             $date->setTimestamp($document['attrs']['published']);
 
+            $category = $document['attrs']['category'];
+            $category_url = $document['attrs']['category_url'];
+
+            $authors = array_keys(json_decode($document['attrs']['authors'], true));
+            $nb_authors = sizeof($authors);
+
+            $tags = json_decode($document['attrs']['tags'], true);
             ?>
 
             <div class="article" itemscope itemtype="http://schema.org/BlogPosting">
@@ -132,12 +139,39 @@ if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
                 </a>
                 <time datetime="<?php echo $date->format('c'); ?>" itemprop="datePublished"><?php echo $formatter->format($date); ?></time>
                 &nbsp;—&nbsp;
-                <span itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-                    <span itemprop="name"><?php echo $document['attrs']['author']; ?></span>
+                <?php
+                // Authors
+                foreach ($authors as $index => $author) {
+                ?>
+                    <span class="author-name" itemprop="author" itemscope itemtype="http://schema.org/Person">
+                        <span itemprop="name"><?php echo $author; ?></span>
+                    </span>
+                <?php
+                    if ($index + 1 < $nb_authors) {
+                        echo ' &amp; ';
+                    }
+                }
+                ?>
+                <div class="summary" itemprop="abstract"><?php echo $document['attrs']['summary']; ?></div>
+                {{ _("Category:") }}
+                <span itemprop="articleSection">
+                    <a href="{{ SITEURL }}/<?php echo $category_url; ?>" rel="category"><?php echo $category; ?></a>
                 </span>
-                <div class="summary"><?php echo $document['attrs']['summary']; ?></div>
-            </div>
-
+                <?php
+                // Tags
+                if (!empty($tags)) {
+                    echo '{{ _("Tags:") }}';
+                    foreach ($tags as $tag_name => &$tag_url) {
+                    ?>
+                    <span itemprop="keywords">
+                        <a href="{{ SITEURL }}/<?php echo $tag_url; ?>" rel="tag"><?php echo $tag_name; ?></a>
+                    </span>&nbsp;
+                    <?php
+                    }
+                    unset($tag_url);
+                }
+                ?>
+            </article>
             <?php
         }
         // Destruct ref on last element
