@@ -70,75 +70,104 @@ class sphinxsearch_xml_generator(object):
             raw_text.append(string)
 
         # Escape all html entities to respect xml rules
-        return html.escape(' '.join(raw_text))
+        return html.escape(" ".join(raw_text))
 
+    def build_data(self, document):
+        """Get dictionary of formatted attributes related to the given document
 
-    def build_data(self, page):
-
-        # Only published pages are concerned (not drafts)
-        if getattr(page, 'status', 'published') != 'published':
+        :return: Dictionary of data ready to be inserted in xml export.
+            Attribute names as keys.
+        :rtype: <dict>
+        """
+        # Only published documents are concerned (not drafts)
+        if getattr(document, "status", None) != "published":
             return
 
-        # Reconstruct url (without the extension)
-        page_url = self.siteurl + '/' + page.url
+        # Reconstruct url
+        document_url = self.siteurl + "/" + document.url
         # Get timestamp
-        page_time = str(page.date.timestamp())
+        document_time = str(document.date.timestamp())
 
         # There may be possible collisions, but it's the best I can think of.
-        page_index = zlib.crc32(str(page_time + page_url).encode('utf-8'))
+        document_index = zlib.crc32(str(document_time + document_url).encode("utf-8"))
 
-        return {'title':  self.get_raw_text(page.title),
-                'author': page.author,
-                'tags': page.category,
-                'url': page_url,
-                'content': self.get_raw_text(page.content),
-                'slug': page.slug,
-                'time': page_time,
-                'index': page_index,
-                'summary': self.get_raw_text(page.summary)}
-
+        return {
+            "title": self.get_raw_text(document.title),
+            "author": document.author,
+            "authors": str({author.name: author.url for author in document.authors}),
+            "category": document.category,
+            "category_url": document.category.url,
+            "url": document.url,
+            "content": self.get_raw_text(document.content),
+            "slug": document.slug,
+            "time": document.date.timestamp(),
+            "index": document_index,
+            "summary": self.get_raw_text(document.summary),
+            "tags": str(
+                {tag.name: tag.url for tag in document.metadata.get("tags", tuple())}
+            ),
+        }
 
     def generate_output(self, writer):
+        """Write `sphinxsearch.xml` file in Pelican output folder
 
-        # Export sphinxsearch.xml in output folder
-        path = os.path.join(self.output_path, 'sphinxsearch.xml')
+        If there is no in-stream schema definition, settings from the
+        configuration file will be used. Otherwise, stream settings take precedence.
 
-        pages = self.context['pages'] + self.context['articles']
+        .. seealso:: https://sphinxsearch.com/docs/current/xmlpipe2.html
 
-        for article in self.context['articles']:
-            pages += article.translations
+        .. note:: multi attributes handle only numeric ids.
+            => not for static site without database.
+        """
+        path = os.path.join(self.output_path, "sphinxsearch.xml")
 
-        with open(path, 'w', encoding='utf-8') as fd:
-            fd.write('<?xml version="1.0" encoding="utf-8"?><sphinx:docset>')
-            for page in pages:
-                data = self.build_data(page)
+        documents = self.context["pages"] + self.context["articles"]
+
+        for article in self.context["articles"]:
+            documents += article.translations
+
+        with open(path, "w", encoding="utf-8") as fd:
+            # Add in-stream schema
+            fd.write(
+                """<?xml version="1.0" encoding="utf-8"?><sphinx:docset>
+                <sphinx:schema>
+                <sphinx:field name="content"/>
+                <sphinx:field name="title"/>
+                <sphinx:attr name="title" type="string"/>
+                <sphinx:attr name="author" type="string"/>
+                <sphinx:attr name="authors" type="json"/>
+                <sphinx:attr name="category" type="string"/>
+                <sphinx:attr name="category_url" type="string"/>
+                <sphinx:attr name="url" type="string"/>
+                <sphinx:attr name="summary" type="string"/>
+                <sphinx:attr name="slug" type="string"/>
+                <sphinx:attr name="published" type="timestamp"/>
+                <sphinx:attr name="tags" type="json"/>
+                </sphinx:schema>
+                """
+            )
+            for document in documents:
+                data = self.build_data(document)
                 fd.write(
-                    '<sphinx:document id="{0}">'
-                    '<title>{1}</title>'
-                    '<author>{2}</author>'
-                    '<category>{3}</category>'
-                    '<url>{4}</url>'
-                    '<content><![CDATA[{5}]]></content>'
-                    '<summary><![CDATA[{6}]]></summary>'
-                    '<slug>{7}</slug>'
-                    '<published>{8}</published>'
-                    '</sphinx:document>'.format(
-                        data['index'],
-                        data['title'],
-                        data['author'],
-                        data['tags'],
-                        data['url'],
-                        data['content'],
-                        data['summary'],
-                        data['slug'],
-                        data['time']
-                    )
+                    '<sphinx:document id="{index}">'
+                    "<title>{title}</title>"
+                    "<author>{author}</author>"
+                    "<authors>{authors}</authors>"
+                    "<category>{category}</category>"
+                    "<category_url>{category_url}</category_url>"
+                    "<url>{url}</url>"
+                    "<content><![CDATA[{content}]]></content>"
+                    "<summary><![CDATA[{summary}]]></summary>"
+                    "<slug>{slug}</slug>"
+                    "<published>{time}</published>"
+                    "<tags>{tags}</tags>"
+                    "</sphinx:document>".format(**data)
                 )
-            fd.write('</sphinx:docset>')
+            fd.write("</sphinx:docset>")
 
 
 def get_generators(generators):
-    return sphinxsearch_xml_generator
+    return SphinxsearchXmlGenerator
 
 
 def register():
