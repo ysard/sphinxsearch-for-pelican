@@ -113,6 +113,9 @@ Array
 if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
 
     if ($found['total_found'] != 0) {
+        // Internationalized date (cf php intl module)
+        $formatter = new IntlDateFormatter('{{ _("en") }}', IntlDateFormatter::SHORT, IntlDateFormatter::SHORT);
+        $formatter->setPattern('E d MMM yyyy');
 
         foreach ($found['matches'] as &$document) {
 
@@ -127,7 +130,7 @@ if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
                 <a href="{{ SITEURL }}/<?php echo $document['attrs']['slug']; ?>.html">
                     <h3 itemprop="name headline"><?php echo $document['attrs']['title']; ?></h3>
                 </a>
-                <time datetime="<?php echo $date->format('c'); ?>" itemprop="datePublished"><?php echo $date->format('D. j M Y'); ?></time>
+                <time datetime="<?php echo $date->format('c'); ?>" itemprop="datePublished"><?php echo $formatter->format($date); ?></time>
                 &nbsp;—&nbsp;
                 <span itemprop="author" itemscope="" itemtype="http://schema.org/Person">
                     <span itemprop="name"><?php echo $document['attrs']['author']; ?></span>
