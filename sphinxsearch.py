@@ -40,24 +40,23 @@ class SphinxsearchXmlGenerator:
 
         self.output_path = output_path
         self.context = context
-        self.siteurl = settings.get('SITEURL')
+        self.siteurl = settings.get("SITEURL")
         self.dict_nodes = []
 
-
     def get_raw_text(self, html_content):
+        """Clean the given html content and return clear text
 
+        Strings are stripped, html entities are escaped as much as possible.
+
+        :return: Clear text
+        :rytpe: <str>
+        """
         html_content = BeautifulSoup(html_content, "html.parser")
 
         # Todo: Suppress this ?
         # lots of entities are rencoded by html.escape func,
         # and Sphinsearch index can strip html entities
-        cleaner_db = \
-            {'“': '"',
-             '”': '"',
-             '’': "'",
-             '^': '&#94;',
-             '¶': ' ',
-            }
+        cleaner_db = {"“": '"', "”": '"', "’": "'", "^": "&#94;", "¶": " "}
 
         # Get raw text from html & replace some entitites
         raw_text = list()
