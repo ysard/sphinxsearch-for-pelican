@@ -19,9 +19,14 @@ Here is a list of improvements:
 
 # Installation of Python dependencies
 
-This plugin needs `beautifulsoup4` module:
+This plugin needs `beautifulsoup4` module (will be automatically installed if needed).
 
-	pip install -r requirements.txt
+Installation:
+
+	pip install pelican-sphinxsearch
+
+	Or locally
+	python setup.py develop
 
 
 # Template integration
