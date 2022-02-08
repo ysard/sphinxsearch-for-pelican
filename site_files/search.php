@@ -20,7 +20,8 @@ along with Shinxsearch for Pelican.  If not, see <http://www.gnu.org/licenses/>.
     //Sanitize the input
     if (isset($_GET['q']) AND !empty($_GET['q'])) {
 
-        $q = htmlspecialchars((string)$_GET['q']);
+        $raw_q = htmlspecialchars((string)$_GET['q']);
+        $q = $raw_q;
 
         // Support of booleans operators
         // NOT is preceed by OR or AND or nothing
@@ -105,7 +106,7 @@ Array
 {% extends "base.html" %}
 {% block content_title %}{% endblock %}
 {% block content %}
-<h2 itemprop="name headline"><?php echo 'Results for "' . htmlspecialchars((string)$_GET['q']) . '":'; ?></h2>
+<h1><?php echo '{{ _("Results for") }} "' . ($raw_q ?? '') . '":'; ?></h1>
 
 <?php
 if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
