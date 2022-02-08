@@ -35,8 +35,7 @@ from bs4 import BeautifulSoup
 from pelican import signals
 
 
-class sphinxsearch_xml_generator(object):
-
+class SphinxsearchXmlGenerator:
     def __init__(self, context, settings, path, theme, output_path, *null):
 
         self.output_path = output_path
