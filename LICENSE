@@ -1,7 +1,7 @@
 This Pelican plugin provides a support of Sphinxsearch tool, allowing users to
 search keywords on the texts proposed on a website generated with Pelican.
 
-Copyright (C) 2017 Ysard
+Copyright (C) 2017-2022 Ysard
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

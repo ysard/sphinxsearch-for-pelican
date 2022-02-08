@@ -96,11 +96,13 @@ Exemple of section for a website:
 		xmlpipe_command = cat /var/www/html/my_own_blog/sphinxsearch.xml
 		xmlpipe_fixup_utf8 = 1
 		xmlpipe_field = content
-		xmlpipe_field = title
 		xmlpipe_attr_string = title
 		xmlpipe_attr_string = author
+		xmlpipe_attr_json = authors
 		xmlpipe_attr_string = url
-		xmlpipe_attr_multi = category
+		xmlpipe_attr_string = category
+		xmlpipe_attr_string = category_url
+		xmlpipe_attr_json = tags
 		xmlpipe_attr_string = summary
 		xmlpipe_attr_string = slug
 		xmlpipe_attr_timestamp = published
