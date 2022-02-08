@@ -104,7 +104,8 @@ Array
 */
 ?>
 {% extends "base.html" %}
-{% block content_title %}{% endblock %}
+{% block description %}{{ _("Search results for %(sitename)s blog.", sitename=SITENAME|striptags|e) }}{% endblock %}
+{% block title %}{{ _("Search") }} — {{ super() }}{% endblock %}
 {% block content %}
 <h1><?php echo '{{ _("Results for") }} "' . ($raw_q ?? '') . '":'; ?></h1>
 
