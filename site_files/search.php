@@ -141,26 +141,17 @@ if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
         unset($document);
 
         // if !empty results
-        echo '</div><div class="col-md-8 col-md-offset-2">';
-        echo '<p>' . $found['total_found'] . ' article(s) found in ' . $found['time'] .'s.</p></div>';
-
+        echo '<p>' . $found['total_found'] . ' {{ _("article(s) found in") }} ' . $found['time'] .'s.</p>';
     } else {
         // No results
-        echo '</div><div class="col-md-8 col-md-offset-2">';
-        echo '<p>There are no results for your query.</p></div>';
-
+        echo '<p>{{ _("There are no results for your query.") }}</p>';
     }
-
 } elseif (isset($found) AND !$found) {
     // Shinxsearch error
-    echo '</div><div class="col-md-8 col-md-offset-2">';
-    echo '<p>Error: ' . $sphinx->getLastError() . '.</p></div>';
-
+    echo '<p>{{ _("Error:") }} ' . $sphinx->getLastError() . '.</p>';
 } else {
     // Bad/no parameters
-    echo '</div><div class="col-md-8 col-md-offset-2">';
-    echo '<p>Did you forget the query?</p></div>';
-
+    echo '<p>{{ _("Did you forget the query?") }}</p>';
 }
 ?>
 {% endblock content %}
