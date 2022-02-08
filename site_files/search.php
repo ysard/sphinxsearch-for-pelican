@@ -16,36 +16,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with Shinxsearch for Pelican.  If not, see <http://www.gnu.org/licenses/>.
 */
-<?php
-    //Sanitize the input
-    if (isset($_GET['q']) AND !empty($_GET['q'])) {
-
-        $raw_q = htmlspecialchars((string)$_GET['q']);
-        $q = $raw_q;
-
-        // Support of booleans operators
-        // NOT is preceed by OR or AND or nothing
-        // => no space before it (people don't send 2 spaces but only 1 after OR or AND)
-        $booleans = array(' OR ', ' or ', ' AND ', ' and ', 'NOT ', 'not ');
-        $bool_ops = array(' | ', ' | ', ' && ', ' && ', '! ', '! ');
-        $q = str_replace($booleans, $bool_ops, $q);
-
-        $sphinx = new SphinxClient;
-        $sphinx->setServer('localhost', 9312);
-        $sphinx->setSortMode(SPH_SORT_RELEVANCE);
-        // enable extended query syntax where you could combine "AND", "OR", "NOT" operators
-        // http://sphinxsearch.com/docs/current.html#extended-syntax
-        $sphinx->setMatchMode(SPH_MATCH_EXTENDED2);
-        $sphinx->setConnectTimeout(2);
-
-        // Returns FALSE on failure.
-        // Query on 'my_blog' index
-        $found = $sphinx->query($q, 'my_blog');
-
-        //var_dump($q);
-        //echo '<pre>', print_r($found, true), '</pre>';
-    }
-/*
+/* Here is an example of response from the PHP API for a query
 Array
 (
     [error] =>
@@ -102,6 +73,35 @@ Array
         )
 )
 */
+<?php
+    //Sanitize the input
+    if (isset($_GET['q']) AND !empty($_GET['q'])) {
+
+        $raw_q = htmlspecialchars((string)$_GET['q']);
+        $q = $raw_q;
+
+        // Support of booleans operators
+        // NOT is preceed by OR or AND or nothing
+        // => no space before it (people don't send 2 spaces but only 1 after OR or AND)
+        $booleans = array(' OR ', ' or ', ' AND ', ' and ', 'NOT ', 'not ');
+        $bool_ops = array(' | ', ' | ', ' && ', ' && ', '! ', '! ');
+        $q = str_replace($booleans, $bool_ops, $q);
+
+        $sphinx = new SphinxClient;
+        $sphinx->setServer('localhost', 9312);
+        $sphinx->setSortMode(SPH_SORT_RELEVANCE);
+        // enable extended query syntax where you could combine "AND", "OR", "NOT" operators
+        // http://sphinxsearch.com/docs/current.html#extended-syntax
+        $sphinx->setMatchMode(SPH_MATCH_EXTENDED2);
+        $sphinx->setConnectTimeout(2);
+
+        // Returns FALSE on failure.
+        // Query on 'my_blog' index
+        $found = $sphinx->query($q, 'my_blog');
+
+        //var_dump($q);
+        //echo '<pre>', print_r($found, true), '</pre>';
+    }
 ?>
 {% extends "base.html" %}
 {% block description %}{{ _("Search results for %(sitename)s blog.", sitename=SITENAME|striptags|e) }}{% endblock %}
