@@ -36,7 +36,7 @@ from pelican import signals
 
 
 class SphinxsearchXmlGenerator:
-    def __init__(self, context, settings, path, theme, output_path, *null):
+    def __init__(self, context, settings, path, theme, output_path, *args):
 
         self.output_path = output_path
         self.context = context
