@@ -74,6 +74,7 @@ class SphinxsearchXmlGenerator:
 
         :return: Dictionary of data ready to be inserted in xml export.
             Attribute names as keys.
+            Return None if the status of the page is not "published".
         :rtype: <dict>
         """
         # Only published documents are concerned (not drafts)
@@ -145,6 +146,8 @@ class SphinxsearchXmlGenerator:
             )
             for document in documents:
                 data = self.build_data(document)
+                if not data:
+                    continue
                 fd.write(
                     '<sphinx:document id="{index}">'
                     "<title>{title}</title>"
