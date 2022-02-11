@@ -41,7 +41,6 @@ class SphinxsearchXmlGenerator:
         self.output_path = output_path
         self.context = context
         self.siteurl = settings.get("SITEURL")
-        self.dict_nodes = []
 
     def get_raw_text(self, html_content):
         """Clean the given html content and return clear text
