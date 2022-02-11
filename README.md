@@ -1,6 +1,6 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)
 ![PyPI](https://img.shields.io/pypi/v/pelican-sphinxsearch)
-![PyPI - License](https://img.shields.io/pypi/l/pelican-sphinxsearch)
+![PyPI - License](https://img.shields.io/pypi/l/pelican-sphinxsearch?color=brigthgreen)
 
 # Shinxsearch for Pelican
 
