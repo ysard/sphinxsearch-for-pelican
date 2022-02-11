@@ -1,3 +1,7 @@
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)
+![PyPI](https://img.shields.io/pypi/v/pelican-sphinxsearch)
+![PyPI - License](https://img.shields.io/pypi/l/pelican-sphinxsearch)
+
 # Shinxsearch for Pelican
 
 The aim of this Pelican plugin is to provide a support of [Sphinxsearch](http://sphinxsearch.com/)
