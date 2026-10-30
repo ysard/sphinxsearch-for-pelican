@@ -55,7 +55,7 @@ class SphinxsearchXmlGenerator:
         # Todo: Suppress this ?
         # lots of entities are rencoded by html.escape func,
         # and Sphinsearch index can strip html entities
-        cleaner_db = {"“": '"', "”": '"', "’": "'", "^": "&#94;", "¶": " "}
+        cleaner_db = {"“": '"', "”": '"', "’": "'", "¶": " "}
 
         # Get raw text from html & replace some entitites
         raw_text = []
