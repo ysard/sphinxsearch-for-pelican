@@ -217,8 +217,13 @@ if (isset($found) && $found !== null && $found['status'] === 0) {
             <?php
         }
 
-        echo '<p>' . (int) $found['total_found'] . ' {{ _("article(s) found in") }} ' .
-             number_format((float) $found['time'], 3, '.', '') . 's.</p>';
+        if ($found['total_found'] > 1) {
+            echo '<p>' . (int) $found['total_found'] . ' {{ _("articles found in") }} ';
+        } else {
+            echo '<p>' . (int) $found['total_found'] . ' {{ _("article found in") }} ';
+        }
+        echo number_format((float) $found['time'], 3, '.', '') . 's.</p>';
+
     } else {
         echo '<p>{{ _("There are no results for your query.") }}</p>';
     }
