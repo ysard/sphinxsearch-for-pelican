@@ -58,7 +58,7 @@ class SphinxsearchXmlGenerator:
         cleaner_db = {"“": '"', "”": '"', "’": "'", "^": "&#94;", "¶": " "}
 
         # Get raw text from html & replace some entitites
-        raw_text = list()
+        raw_text = []
         for string in html_content.stripped_strings:
             for old, new in cleaner_db.items():
                 string = string.replace(old, new)
@@ -78,7 +78,7 @@ class SphinxsearchXmlGenerator:
         """
         # Only published documents are concerned (not drafts)
         if getattr(document, "status", None) != "published":
-            return
+            return {}
 
         # Reconstruct url
         document_url = self.siteurl + "/" + document.url
