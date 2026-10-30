@@ -1,6 +1,8 @@
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)
-![PyPI](https://img.shields.io/pypi/v/pelican-sphinxsearch)
-![PyPI - License](https://img.shields.io/pypi/l/pelican-sphinxsearch?color=brigthgreen)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ysard/sphinxsearch-for-pelican)](https://github.com/ysard/sphinxsearch-for-pelican/releases/latest/)
+[![python versions on pypi](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)](https://pypi.python.org/pypi/pelican-sphinxsearch)
+[![version on pypi](https://img.shields.io/pypi/v/pelican-sphinxsearch)](https://pypi.python.org/pypi/pelican-sphinxsearch)
+[![license](https://img.shields.io/pypi/l/pelican-sphinxsearch)](https://github.com/ysard/sphinxsearch-for-pelican/blob/main/LICENSE)
+[![Donate](./images/liberapay.svg)](https://liberapay.com/Ysard/donate)
 
 # Shinxsearch & Manticore Search for Pelican
 
