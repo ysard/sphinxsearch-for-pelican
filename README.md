@@ -14,8 +14,7 @@ with [Pelican](http://docs.getpelican.com/en/stable/) (a static site generator w
 <img alt="search box screenshot" src="./demo/search_box.png" />
 
 The plugin itself is widely inspired from this nice work:
-
-[Github: pelican-search](https://github.com/MTecknology/pelican-search/tree/master/pelican).
+[pelican-search](https://github.com/MTecknology/pelican-search/tree/master/pelican).
 
 Here is a list of improvements:
 
