@@ -13,9 +13,12 @@ authors = [
 keywords = ["pelican", "sphinxsearch", "manticore search", "search index", "fulltext"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
+    "Framework :: Pelican",
+    "Framework :: Pelican :: Plugins",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
@@ -25,6 +28,8 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 license = "AGPL-3.0-or-later"
 dependencies = [
