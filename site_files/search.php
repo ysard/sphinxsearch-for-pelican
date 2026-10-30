@@ -35,8 +35,8 @@ $escapeHtml = static function ($value): string {
     if (!is_scalar($value) && $value !== null) {
         $value = '';
     }
-
-    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    // Do not encode html entities twice (double_encode)
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false);
 };
 
 if (array_key_exists('q', $_GET)) {
