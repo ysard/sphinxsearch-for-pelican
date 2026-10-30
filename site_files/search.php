@@ -1,191 +1,241 @@
-/*
-This file is part of Shinxsearch for Pelican
-
-Copyright (C) 2017-2022 Ysard
-
-Shinxsearch for Pelican is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-Shinxsearch for Pelican is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with Shinxsearch for Pelican.  If not, see <http://www.gnu.org/licenses/>.
-*/
-/* Here is an example of response from the PHP API for a query
-Array
-(
-    [error] =>
-    [warning] =>
-    [status] => 0
-    [fields] => Array
-        (
-            [0] => content
-            [1] => title
-        )
-
-    [attrs] => Array
-        (
-            [published] => 2
-            [category] => 1073741825
-            [title] => 7
-            [author] => 7
-            [url] => 7
-            [summary] => 7
-            [slug] => 7
-        )
-
-    [matches] => Array
-        (
-            [637352186] => Array
-                (
-                    [weight] => 1678
-                    [attrs] => Array
-                        (
-                            [published] => 1482102000
-                            [category] => Array
-                                (
-                                )
-
-                            [title] => mock title
-                            [author] => mock user
-                            [url] => /mock.html
-                            [summary] => mock summary.
-                            [slug] => mock_slug
-                        )
-
-                )
-
-                [total] => 2
-    [total_found] => 2
-    [time] => 0
-    [words] => Array
-        (
-            [mock] => Array
-                (
-                    [docs] => 2
-                    [hits] => 2
-                )
-        )
-)
-*/
 <?php
-    //Sanitize the input
-    if (isset($_GET['q']) AND !empty($_GET['q'])) {
+/*
+ * Copyright (c) 2017-2026 Ysard
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://gnu.org>.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+/**
+ * Pelican blog search page, using SphinxQL over the MySQL wire protocol.
+ * Requires PHP pdo_mysql and intl extensions, plus a SphinxQL listener on
+ * 127.0.0.1:9306. The index name is by default set to my_blog, but can be
+ * modified thanks to the `SPHINX_INDEX` variable declared in Pelican configuration.
+ */
 
-        $raw_q = htmlspecialchars((string)$_GET['q']);
-        $q = $raw_q;
+$found = null;
+$raw_q = '';
+$searchError = false;
+$invalidQuery = false;
 
-        // Support of booleans operators
-        // NOT is preceed by OR or AND or nothing
-        // => no space before it (people don't send 2 spaces but only 1 after OR or AND)
-        $booleans = array(' OR ', ' or ', ' AND ', ' and ', 'NOT ', 'not ');
-        $bool_ops = array(' | ', ' | ', ' && ', ' && ', '! ', '! ');
-        $q = str_replace($booleans, $bool_ops, $q);
-
-        $sphinx = new SphinxClient;
-        $sphinx->setServer('localhost', 9312);
-        $sphinx->setSortMode(SPH_SORT_RELEVANCE);
-        // enable extended query syntax where you could combine "AND", "OR", "NOT" operators
-        // http://sphinxsearch.com/docs/current.html#extended-syntax
-        $sphinx->setMatchMode(SPH_MATCH_EXTENDED2);
-        $sphinx->setConnectTimeout(2);
-
-        // Returns FALSE on failure.
-        // Query on 'my_blog' index
-        $found = $sphinx->query($q, 'my_blog');
-
-        //var_dump($q);
-        //echo '<pre>', print_r($found, true), '</pre>';
+// Escape values at the point where they are inserted into HTML, not before
+// searching. Non-scalar values are rejected to avoid array-to-string warnings.
+$escapeHtml = static function ($value): string {
+    if (!is_scalar($value) && $value !== null) {
+        $value = '';
     }
+
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
+
+if (array_key_exists('q', $_GET)) {
+    // Reject arrays and other unexpected query-string shapes (e.g. q[]=x).
+    if (!is_string($_GET['q'])) {
+        http_response_code(400);
+        $invalidQuery = true;
+    } else {
+        $raw_q = trim($_GET['q']);
+
+        if ($raw_q !== '') {
+            // Bound query size and reject malformed UTF-8/control characters.
+            // The byte limit also caps the amount of work sent to searchd.
+            // Purge bots that follow template string of search action schema.
+            $containsForbiddenControl = preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $raw_q) === 1;
+            if (
+                $raw_q === '{search_term_string}' ||
+                strlen($raw_q) > 128 ||
+                preg_match('//u', $raw_q) !== 1 ||
+                $containsForbiddenControl
+            ) {
+                http_response_code(400);
+                $invalidQuery = true;
+                $raw_q = '';
+            } else {
+                // Preserve the original search page's boolean-operator mapping.
+                // This changes Sphinx's MATCH expression, not the surrounding SQL.
+                $query = str_replace(
+                    array(' OR ', ' or ', ' AND ', ' and ', 'NOT ', 'not '),
+                    array(' | ',  ' | ',  ' & ',  ' & ',  '! ',   '! '),
+                    $raw_q
+                );
+
+                $pdo = null;
+                try {
+                    // ATTR_EMULATE_PREPARES:
+                    // Sphinx 2.x exposes SphinxQL over the MySQL wire protocol,
+                    // but does not document/support native server-side prepared
+                    // statements. PDO therefore uses emulated prepared statements
+                    // here: the query stays parameterized in PHP, and PDO quotes
+                    // the bound value before sending the resulting SQL to searchd.
+                    // During a migration to Manticore, should be set to false.
+                    $dsn = 'mysql:host=127.0.0.1;port=9306;charset=utf8';
+                    $pdo = new PDO($dsn, '', '', array(
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::ATTR_EMULATE_PREPARES => false,
+                        PDO::ATTR_TIMEOUT => 2,
+                        PDO::MYSQL_ATTR_MULTI_STATEMENTS => false,
+                    ));
+
+                    // Keep the SQL structure constant. Only the MATCH() value is
+                    // supplied by the visitor, through a PDO parameter binding.
+                    $sql = "SELECT *, WEIGHT() AS search_weight " .
+                           "FROM {{ SPHINX_INDEX | default('my_blog', true) }} WHERE MATCH(?) " .
+                           "ORDER BY WEIGHT() DESC LIMIT 0, 20";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->bindValue(1, $query, PDO::PARAM_STR);
+                    $stmt->execute();
+
+                    $matches = array();
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $weight = (int) ($row['search_weight'] ?? 0);
+                        unset($row['id'], $row['search_weight']);
+
+                        // Adapt each SphinxQL row to the old SphinxClient-style
+                        // structure used by the existing rendering code.
+                        $matches[] = array(
+                            'weight' => $weight,
+                            'attrs' => $row,
+                        );
+                    }
+                    $stmt->closeCursor();
+
+                    // SHOW META applies to the immediately preceding SELECT and
+                    // must run on the same connection.
+                    $metaStmt = $pdo->query("SHOW META");
+                    $metaRows = $metaStmt->fetchAll();
+                    $metaStmt->closeCursor();
+
+                    $meta = array();
+                    foreach ($metaRows as $metaRow) {
+                        $name = $metaRow['Variable_name'] ?? null;
+                        $value = $metaRow['Value'] ?? null;
+                        if (is_string($name)) {
+                            $meta[$name] = $value;
+                        }
+                    }
+
+                    // Do not use 'total_found', since it contains the total number of
+                    // matches in the dataset before the LIMIT statement is applied.
+                    $found = array(
+                        'status' => 0,
+                        'matches' => $matches,
+                        'total_found' => count($matches),
+                        /*
+                        'total_found' => isset($meta['total_found'])
+                            ? (int) $meta['total_found']
+                            : count($matches),
+                        */
+                        'time' => isset($meta['time']) ? (float) $meta['time'] : 0.0,
+                    );
+                } catch (Throwable $exception) {
+                    $searchError = true;
+                    error_log(
+                        '[pelican-search] SphinxQL/PDO request failed'
+                        . '; <' . (string) $exception->getMessage()
+                        . '>; in ' . (string) $exception->getFile() . ':' . (int) $exception->getLine()
+                    );
+                } finally {
+                    $pdo = null;
+                }
+            }
+        }
+    }
+}
 ?>
 {% extends "base.html" %}
 {% block description %}{{ _("Search results for %(sitename)s blog.", sitename=SITENAME|striptags|e) }}{% endblock %}
 {% block title %}{{ _("Search") }} — {{ super() }}{% endblock %}
 {% block content %}
-<h1><?php echo '{{ _("Results for") }} "' . ($raw_q ?? '') . '":'; ?></h1>
+<h1><?php echo '{{ _("Results for") }} "' . $escapeHtml($raw_q) . '":'; ?></h1>
 
 <?php
-if (isset($found) AND $found !== FALSE AND $found['status'] == 0) {
-
-    if ($found['total_found'] != 0) {
-        // Internationalized date (cf php intl module)
+if (isset($found) && $found !== null && $found['status'] === 0) {
+    if ($found['total_found'] !== 0) {
+        // Internationalized date (requires PHP intl).
         $formatter = new IntlDateFormatter('{{ _("en") }}', IntlDateFormatter::SHORT, IntlDateFormatter::SHORT);
         $formatter->setPattern('E d MMM yyyy');
 
-        foreach ($found['matches'] as &$document) {
-            // Get date from timestamp
+        foreach ($found['matches'] as $document) {
+            $attrs = $document['attrs'];
+
             $date = new DateTime();
-            $date->setTimestamp($document['attrs']['published']);
+            $date->setTimestamp((int) ($attrs['published'] ?? 0));
 
-            $category = $document['attrs']['category'];
-            $category_url = $document['attrs']['category_url'];
+            $categoryValue = $attrs['category'] ?? '';
+            $category = is_scalar($categoryValue) ? (string) $categoryValue : '';
+            $categoryUrl = $attrs['category_url'] ?? '';
 
-            $authors = array_keys(json_decode($document['attrs']['authors'], true));
-            $nb_authors = sizeof($authors);
+            $authorsData = json_decode((string) ($attrs['authors'] ?? ''), true);
+            $authors = is_array($authorsData) ? array_keys($authorsData) : array();
+            $nbAuthors = count($authors);
 
-            $tags = json_decode($document['attrs']['tags'], true);
+            $tagsData = json_decode((string) ($attrs['tags'] ?? ''), true);
+            $tags = is_array($tagsData) ? $tagsData : array();
             ?>
-
-            <article class="article" itemscope itemtype="http://schema.org/BlogPosting">
-                <a href="{{ SITEURL }}/<?php echo $document['attrs']['url']; ?>">
-                    <h2 itemprop="headline"><?php echo $document['attrs']['title']; ?></h2>
+            <article class="article" itemscope itemtype="https://schema.org/BlogPosting">
+                <a href="{{ SITEURL }}/<?php echo $escapeHtml($attrs['url'] ?? ''); ?>">
+                    <h2 itemprop="headline"><?php echo $escapeHtml($attrs['title'] ?? ''); ?></h2>
                 </a>
-                <time datetime="<?php echo $date->format('c'); ?>" itemprop="datePublished"><?php echo $formatter->format($date); ?></time>
+                <time datetime="<?php echo $escapeHtml($date->format('c')); ?>" itemprop="datePublished"><?php echo $escapeHtml($formatter->format($date) ?: ''); ?></time>
                 &nbsp;—&nbsp;
                 <?php
                 // Authors
                 foreach ($authors as $index => $author) {
-                ?>
-                    <span class="author-name" itemprop="author" itemscope itemtype="http://schema.org/Person">
-                        <span itemprop="name"><?php echo $author; ?></span>
+                    ?>
+                    <span class="author-name" itemprop="author" itemscope itemtype="https://schema.org/Person">
+                        <span itemprop="name"><?php echo $escapeHtml($author); ?></span>
                     </span>
-                <?php
-                    if ($index + 1 < $nb_authors) {
+                    <?php
+                    if ($index + 1 < $nbAuthors) {
                         echo ' &amp; ';
                     }
                 }
                 ?>
-                <div class="summary" itemprop="abstract"><?php echo $document['attrs']['summary']; ?></div>
+                <div class="summary" itemprop="abstract"><?php echo $escapeHtml($attrs['summary'] ?? ''); ?></div>
                 {{ _("Category:") }}
                 <span itemprop="articleSection">
-                    <a href="{{ SITEURL }}/<?php echo $category_url; ?>" rel="category"><?php echo $category; ?></a>
+                    <a href="{{ SITEURL }}/<?php echo $escapeHtml($categoryUrl); ?>" rel="category"><?php echo $escapeHtml($category); ?></a>
                 </span>
                 <?php
                 // Tags
                 if (!empty($tags)) {
                     echo '{{ _("Tags:") }}';
-                    foreach ($tags as $tag_name => &$tag_url) {
-                    ?>
-                    <span itemprop="keywords">
-                        <a href="{{ SITEURL }}/<?php echo $tag_url; ?>" rel="tag"><?php echo $tag_name; ?></a>
-                    </span>&nbsp;
-                    <?php
+                    foreach ($tags as $tagName => $tagUrl) {
+                        ?>
+                        <span itemprop="keywords">
+                            <a href="{{ SITEURL }}/<?php echo $escapeHtml($tagUrl); ?>" rel="tag"><?php echo $escapeHtml($tagName); ?></a>
+                        </span>&nbsp;
+                        <?php
                     }
-                    unset($tag_url);
                 }
                 ?>
             </article>
             <?php
         }
-        // Destruct ref on last element
-        unset($document);
 
-        // if !empty results
-        echo '<p>' . $found['total_found'] . ' {{ _("article(s) found in") }} ' . $found['time'] .'s.</p>';
+        echo '<p>' . (int) $found['total_found'] . ' {{ _("article(s) found in") }} ' .
+             number_format((float) $found['time'], 3, '.', '') . 's.</p>';
     } else {
-        // No results
         echo '<p>{{ _("There are no results for your query.") }}</p>';
     }
-} elseif (isset($found) AND !$found) {
-    // Shinxsearch error
-    echo '<p>{{ _("Error:") }} ' . $sphinx->getLastError() . '.</p>';
+} elseif ($invalidQuery) {
+    echo '<p>{{ _("The search query is invalid.") }}</p>';
+} elseif ($searchError) {
+    // Backend details are intentionally hidden from the public response.
+    echo '<p>{{ _("Search is temporarily unavailable.") }}</p>';
 } else {
-    // Bad/no parameters
     echo '<p>{{ _("Did you forget the query?") }}</p>';
 }
 ?>

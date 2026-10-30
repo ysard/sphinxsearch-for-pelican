@@ -1,78 +1,80 @@
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)
-![PyPI](https://img.shields.io/pypi/v/pelican-sphinxsearch)
-![PyPI - License](https://img.shields.io/pypi/l/pelican-sphinxsearch?color=brigthgreen)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ysard/sphinxsearch-for-pelican)](https://github.com/ysard/sphinxsearch-for-pelican/releases/latest/)
+[![python versions on pypi](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)](https://pypi.python.org/pypi/pelican-sphinxsearch)
+[![version on pypi](https://img.shields.io/pypi/v/pelican-sphinxsearch)](https://pypi.python.org/pypi/pelican-sphinxsearch)
+[![license](https://img.shields.io/pypi/l/pelican-sphinxsearch)](https://github.com/ysard/sphinxsearch-for-pelican/blob/main/LICENSE)
+[![Donate](./images/liberapay.svg)](https://liberapay.com/Ysard/donate)
 
-# Shinxsearch for Pelican
+# Shinxsearch & Manticore Search for Pelican
 
-The aim of this Pelican plugin is to provide a support of [Sphinxsearch](http://sphinxsearch.com/)
-tool, allowing users to search keywords on the texts proposed on a website generated 
+The aim of this Pelican plugin is to provide a support for [Sphinxsearch](http://sphinxsearch.com/)
+and [Manticore Search](https://manticoresearch.com/)
+tools, bringing fulltext searchs on a website generated
 with [Pelican](http://docs.getpelican.com/en/stable/) (a static site generator written in Python).
 
-The plugin itself is widely inspired from this nice work:
+<img alt="search box screenshot" src="./demo/search_box.png" />
 
-[Github: pelican-search](https://github.com/MTecknology/pelican-search/tree/master/pelican).
+The plugin itself is widely inspired from this nice work:
+[pelican-search](https://github.com/MTecknology/pelican-search/tree/master/pelican).
 
 Here is a list of improvements:
 
-- Support of Python 3.x
-- Better support for html text with BeautifulSoup
-- HTML and PHP templates for the search box and the results page
-- Support of OR, AND, NOT query operators
-- You don't need uwsgi application only for the search engine, a simple PHP server is the only requirement
+- Support of Python 3.x;
+- Better support for html text with BeautifulSoup;
+- HTML and PHP templates for the search box and the results page;
+- Support of boolean query operators (OR, AND, NOT);
+- A simple PHP server is the only requirement;
+- The code uses SphinxQL queries sent on a MySQL protocol (PDO + prepared queries).
+  There is no need to compile the old and deprecated Sphinx library.
 
 
 ## Installation of Python dependencies
 
-This plugin needs `beautifulsoup4` module (will be automatically installed if needed).
-
-Installation:
+Installation from pypi:
 
 	pip install pelican-sphinxsearch
 
-	# Or locally
-	python setup.py develop
+Or locally:
+
+	git clone https://github.com/ysard/sphinxsearch-for-pelican
+	pip install -e ./sphinxsearch-for-pelican
 
 
 ## Template integration
 
 Examples are available in the folder `site_files`.
 
-An example of search box is in the file `search_box.html`;
+An example of a search area is in the file `search_box.html`;
 you can include this template where you want in your theme;
 preferably in the file `base.html` with this directive:
 
 	{% include 'search_box.html' %}
 
-Few CSS rules are available in the file `search_box.css`.
-
-Here is an example of what you can expect if you add them to your
-own CSS rules:
-
-<img alt="search box screenshot" src="./demo/search_box.png" />
+The related CSS rules are available in the file `search_box.css`.
 
 ---
 
-For the results, a full PHP page is available in the file `search.php`.
-This page handles form posts, does queries to Sphinxsearch engine, 
-and prints the results for the users.
+The provided PHP page `search.php` handles form posts, sends queries to Sphinx or Manticore engine,
+and format the results for the users.
 
-You can modify the location of your Sphinxsearch engine, by updating
-this line:
+You can modify the location of your engine, by updating this line:
 
-	$sphinx->setServer('localhost', 9312);
+```php
+$dsn = 'mysql:host=127.0.0.1;port=9306;charset=utf8';
+```
 
 Here is an example of what you can expect:
 
 <img alt="search results screenshot" src="./demo/php_search_results.png" />
 
----
 
-Files `search.php` and `search_box.html` have to be 
-put in the directory `templates` of your theme.
+## Template installation
+
+`search.php` and `search_box.html` files have to be
+copied in the directory `templates` of your Pelican theme.
 
 Example:
 
-	./pelican-themes/aboutwilson/templates
+	./pelican-themes/aboutwilson/templates/
 
 
 ## Pelican configuration
@@ -83,15 +85,18 @@ In your `pelicanconf.py`, please add/update these lines:
 	PLUGINS += ['pelican.plugins.sphinxsearch',]
 
 	# If installed locally
-	PLUGIN_PATHS = ['pelican-plugins']
-	PLUGINS += ['sphinxsearch',]
+	#PLUGIN_PATHS = ['pelican-plugins']
+	#PLUGINS += ['sphinxsearch',]
 
 	# Tell Pelican to render this page as a template
 	TEMPLATE_PAGES = {'search.php': 'search.php',}
 
+	# The Sphinx index name is by default set to 'my_blog', but can be
+	# modified thanks to the `SPHINX_INDEX` variable
+	#SPHINX_INDEX = "my_blog"
+
 
 ## Sphinxsearch configuration
-
 
 ### Configuration file
 
@@ -100,15 +105,15 @@ Please edit the following file in the server:
 	sudo nano /etc/sphinxsearch/sphinx.conf
 
 
-The only file that will be indexed is named `sphinxsearch.xml` and it 
+The only file that will be indexed is named `sphinxsearch.xml` and it
 appears in the folder `output` of the Pelican project when you update it.
 
 
-Exemple of section for a website:
+Exemple of section for a website (using the default index named `myblog` and hosted in `/var/www/html/blog/`):
 
 	source my_blog {
 		type = xmlpipe2
-		xmlpipe_command = cat /var/www/html/my_own_blog/sphinxsearch.xml
+		xmlpipe_command = cat /var/www/html/blog/sphinxsearch.xml
 		xmlpipe_fixup_utf8 = 1
 		xmlpipe_field = content
 		xmlpipe_attr_string = title
@@ -178,13 +183,12 @@ according to the language you are processing.
 
 ### Create/update the index
 
-
-The first time the command for the initialization of the index is:
+The index must be created once with:
 
 	sudo indexer --all
 
 
-Next times, the command will be like this one:
+Next times, the command will be like:
 
 	sudo /usr/bin/indexer --rotate --config /etc/sphinxsearch/sphinx.conf --all
 
@@ -200,4 +204,6 @@ You can update the `Makefile` of the Pelican project by adding this directive:
 	$(MAKE) update_sphinxsearch
 
 
+# License
 
+This program is released under the GNU Affero General Public License.

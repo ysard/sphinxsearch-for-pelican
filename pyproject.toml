@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pelican-sphinxsearch"
+dynamic = ["version"]
+description = "A Pelican plugin to provide a support for Sphinxsearch and Manticore Search tools, bringing fulltext searchs on a website generated with Pelican (a static site generator written in Python)."
+readme = "README.md"
+authors = [
+    { name = "Ysard", email = "ysard@users.noreply.github.com" }
+]
+keywords = ["pelican", "sphinxsearch", "manticore search", "search index", "fulltext"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+license = "AGPL-3.0-or-later"
+dependencies = [
+    "beautifulsoup4",
+    "pelican>=4"
+]
+requires-python = ">3.6"
+
+[project.urls]
+Homepage = "https://github.com/ysard/sphinxsearch-for-pelican"
+Repository = "https://github.com/ysard/sphinxsearch-for-pelican"
+"Code Examples" = "https://github.com/ysard/sphinxsearch-for-pelican/tree/master/site_files"
+
+[project.optional-dependencies]
+dev = [
+    "pytest-cov>=2.6.1",
+    "pytest>=5.2.0",
+    "pytest-runner",
+    "zest.releaser[recommended]"
+]
+
+[tool.setuptools.packages.find]
+include = ["pelican.plugins.sphinxsearch*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pelican.plugins.sphinxsearch.__version__" }
+
+[tool.zest-releaser]
+python-file-with-version = "pelican/plugins/sphinxsearch/__init__.py"
