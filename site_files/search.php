@@ -222,6 +222,7 @@ if (isset($found) && $found !== null && $found['status'] === 0) {
                 }
                 ?>
             </article>
+            <hr>
             <?php
         }
 
