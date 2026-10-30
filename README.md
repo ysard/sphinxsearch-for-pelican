@@ -81,12 +81,7 @@ Example:
 
 In your `pelicanconf.py`, please add/update these lines:
 
-	# If installed via PyPI/pip
 	PLUGINS += ['pelican.plugins.sphinxsearch',]
-
-	# If installed locally
-	#PLUGIN_PATHS = ['pelican-plugins']
-	#PLUGINS += ['sphinxsearch',]
 
 	# Tell Pelican to render this page as a template
 	TEMPLATE_PAGES = {'search.php': 'search.php',}
