@@ -114,17 +114,8 @@ if (array_key_exists('q', $_GET)) {
                     // SHOW META applies to the immediately preceding SELECT and
                     // must run on the same connection.
                     $metaStmt = $pdo->query("SHOW META");
-                    $metaRows = $metaStmt->fetchAll();
+                    $meta = $metaStmt->fetchAll(PDO::FETCH_KEY_PAIR);
                     $metaStmt->closeCursor();
-
-                    $meta = array();
-                    foreach ($metaRows as $metaRow) {
-                        $name = $metaRow['Variable_name'] ?? null;
-                        $value = $metaRow['Value'] ?? null;
-                        if (is_string($name)) {
-                            $meta[$name] = $value;
-                        }
-                    }
 
                     // Do not use 'total_found', since it contains the total number of
                     // matches in the dataset before the LIMIT statement is applied.
