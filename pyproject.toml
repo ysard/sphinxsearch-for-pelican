@@ -47,7 +47,10 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["pelican.plugins.sphinxsearch*"]
+# These lines are mandatory for editable mode:
+# Scans and includes absolutely everything inside `pelican/` no matter the depth.
+include = ["pelican.*"]
+namespaces = true
 
 [tool.setuptools.dynamic]
 version = { attr = "pelican.plugins.sphinxsearch.__version__" }
