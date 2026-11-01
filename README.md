@@ -1,6 +1,7 @@
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ysard/sphinxsearch-for-pelican)](https://github.com/ysard/sphinxsearch-for-pelican/releases/latest/)
 [![python versions on pypi](https://img.shields.io/pypi/pyversions/pelican-sphinxsearch)](https://pypi.python.org/pypi/pelican-sphinxsearch)
 [![version on pypi](https://img.shields.io/pypi/v/pelican-sphinxsearch)](https://pypi.python.org/pypi/pelican-sphinxsearch)
+[![Downloads](https://img.shields.io/pypi/dm/pelican-sphinxsearch)](https://pypi.org/project/pelican-sphinxsearch/)
 [![license](https://img.shields.io/pypi/l/pelican-sphinxsearch)](https://github.com/ysard/sphinxsearch-for-pelican/blob/main/LICENSE)
 [![Donate](./images/liberapay.svg)](https://liberapay.com/Ysard/donate)
 
